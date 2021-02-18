@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TSUCAT studio</title>
+    <script src="https://code.playcanvas.com/playcanvas-latest.js"></script>
+    <script src="js/html5kellycolorpicker.min.js"></script>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+
+<body>
+
+    <body>
+        <div id="wrapper">
+            <div id="canvasBottom">
+                <canvas id="picker"></canvas>
+                <br>
+                <input id="color" value="#54aedb">
+            </div>
+            <div id="canvasTop">
+                <canvas id="application-canvas"></canvas>
+            </div>
+        </div>
+
+        <script>
+            new KellyColorPicker({ place: 'picker', input: 'color', size: 150 });
+            var canvas = document.getElementById("application-canvas");
+            var app = new pc.Application(canvas, {
+                mouse: new pc.Mouse(canvas),
+                touch: new pc.TouchDevice(document.body),
+                elementInput: new pc.ElementInput(canvas)
+            });
+            app.start();
+            app.setCanvasFillMode(pc.FILLMODE_FILL_WINDOW);
+            app.setCanvasResolution(pc.RESOLUTION_AUTO);
+
+            app.scene.ambientLight = new pc.Color(0.2, 0.2, 0.2);
+            var head, glasses1, glasses2, entity, light, camera;
+            var glasses = new Array();
+
+
+//Head
+            var url = "assets/play/lee-perry-smith-head-scan.glb";
+            app.assets.loadFromUrl(url, "model", function (err, asset) {
+                head = new pc.Entity();
+                head.addComponent("model", {
+                    type: "asset",
+                    asset: asset,
+                    castShadows: true
+                });
+                head.setLocalScale(3.50, 3.5, 3.5);
+                head.setPosition(0, -0.7, 0);
+                app.root.addChild(head);
+            });
+            
+//Glasses1
+            var urlglasses1 = "assets/play/glasses2/glasses.glb";
+            app.assets.loadFromUrl(urlglasses1, "model", function (err, asset) {
+                glasses1 = new pc.Entity();
+                glasses1.addComponent("model", {
+                    type: "asset",
+                    asset: asset,
+                    castShadows: true
+                });
+
+                glasses1.setLocalScale(0.06, 0.06, 0.06);
+                glasses1.setPosition(0, 0.38, 0.13);
+                glasses.push(glasses1);
+            });
+//Glasses2
+            var urlglasses2 = "assets/play/glasses1/glasses.glb";
+            app.assets.loadFromUrl(urlglasses2, "model", function (err, asset) {
+                glasses2 = new pc.Entity();
+                glasses2.addComponent("model", {
+                    type: "asset",
+                    asset: asset,
+                    castShadows: true
+                });
+                glasses2.setLocalScale(0.0042, 0.0042, 0.0042);
+                glasses2.setPosition(0, 0.38, 0.1);
+                glasses2.rotate(20, 0, 0);
+                glasses.push(glasses2);
+            });
+
+//Screen
+            var screen = new pc.Entity();
+            screen.addComponent("screen", {
+                referenceResolution: new pc.Vec2(1280, 720),
+                scaleBlend: 0.5,
+                scaleMode: pc.SCALEMODE_BLEND,
+                screenSpace: true
+            });
+            app.root.addChild(screen);
+
+            var camera = new pc.Entity();
+            camera.addComponent('camera', {
+                clearColor: new pc.Color(0.0, 0.0, 0.0)
+            });
+            camera.addComponent('script');
+            camera.script.create('orbitCamera');
+            camera.script.create('orbitCameraMouseInput');
+            camera.translate(0, 0, 10);
+
+//Light
+            var light = new pc.Entity();
+            light.addComponent("light", {
+                type: "point",
+                color: new pc.Color(1, 1, 1),
+                range: 100,
+                castShadows: true
+            });
+            light.translate(5, 0, 15);
+;
+            function createButton(labelText, x, y, z, height, width) {
+                var button = new pc.Entity();
+                button.addComponent("button", {
+                    imageEntity: button
+                });
+                button.addComponent("element", {
+                    anchor: [0.5, 0.5, 0.5, 0.5],
+                    height: height,
+                    pivot: [0.5, 0.5],
+                    type: pc.ELEMENTTYPE_IMAGE,
+                    width: width,
+                    useInput: true
+                });
+
+                var label = new pc.Entity();
+                label.addComponent("element", {
+                    anchor: [0.5, 0.5, 0.5, 0.5],
+                    color: new pc.Color(0, 0, 0),
+                    fontSize: 24,
+                    height: 64,
+                    pivot: [0.5, 0.5],
+                    text: labelText,
+                    type: pc.ELEMENTTYPE_TEXT,
+                    fontAsset: fontAsset,
+                    width: 128,
+                    wrapLines: true
+                });
+                button.addChild(label);
+                button.setLocalPosition(x, y, z);
+                return button;
+            }
+            const btnNextGlasses = createButton("Next", 0, -200, 10, 60, 100);
+            let countClick = 0;
+            btnNextGlasses.button.on('click', function (e) {
+                countClick++;
+                if (countClick % 2 === 0) {
+                    app.root.removeChild(glasses[0]);
+                    app.root.addChild(glasses[1]);
+                }
+                else {
+                    app.root.removeChild(glasses[1]);
+                    app.root.addChild(glasses[0]);
+                }
+
+            });
+            screen.addChild(btnNextGlasses);
+            const btnPlusSize = createButton("+", 500, 220, 10, 40, 40);
+            btnPlusSize.button.on('click', function (e) {
+                for (let i = 0; i < glasses.length; i++) {
+                    var scale = glasses[i].getLocalScale();
+                    scale.x *= 1.01;
+                    scale.y *= 1.01;
+                    scale.z *= 1.01;
+                    glasses[i].setLocalScale(scale);
+                }
+            });
+            screen.addChild(btnPlusSize);
+            const btnMinusSize = createButton("-", 500, 170, 10, 40, 40);
+            btnMinusSize.button.on('click', function (e) {
+                for (let i = 0; i < glasses.length; i++) {
+                    var scale = glasses[i].getLocalScale();
+                    scale.x /= 1.01;
+                    scale.y /= 1.01;
+                    scale.z /= 1.01;
+                    glasses[i].setLocalScale(scale);
+                }
+            });
+            screen.addChild(btnMinusSize);
+            let btnColor = createButton("Apply", -450, 220, 10, 40, 100);
+            function hexToRgb(hex) {
+                var result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+                return result ? {
+                    r: parseInt(result[1], 16),
+                    g: parseInt(result[2], 16),
+                    b: parseInt(result[3], 16)
+                } : null;
+            }
+            btnColor.button.on('click', function (e) {
+                let color = document.getElementById("color").value;
+                let hex = Object.values(hexToRgb(color));
+                for (let i = 0; i < glasses.length; i++) {
+                    var materials = glasses[i].model.model.getMaterials();
+                    materials[0].diffuse = new pc.Color(hex[0] / 255, hex[1] / 255, hex[2] / 255);
+                    materials[0].update();
+                }
+            });
+            screen.addChild(btnColor);
+// Load a font
+            var fontAsset = new pc.Asset('courier.json', "font", { url: "./fonts/Arial.json" });
+            screen.findComponents('element').forEach(function (elementComponent) {
+                if (elementComponent.type === pc.ELEMENTTYPE_TEXT) {
+                    elementComponent.fontAsset = fontAsset;
+                }
+            });
+
+
+            app.root.addChild(light);
+            app.root.addChild(camera)
+            app.assets.add(fontAsset);
+            app.assets.load(fontAsset);
+        </script>
+        <script src="js/orbit-camera.js"></script>
+    </body>
+</body>
+
+</html>
