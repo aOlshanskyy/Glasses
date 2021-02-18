@@ -42,7 +42,7 @@
             var glasses = new Array();
 
 
-//Head
+            //Head
             var url = "assets/play/lee-perry-smith-head-scan.glb";
             app.assets.loadFromUrl(url, "model", function (err, asset) {
                 head = new pc.Entity();
@@ -55,9 +55,8 @@
                 head.setPosition(0, -0.7, 0);
                 app.root.addChild(head);
             });
-            
-//Glasses1
-            var urlglasses1 = "assets/play/glasses2/glasses.glb";
+//glasses1
+            var urlglasses1 = "assets/play/glasses3/glasses.glb";
             app.assets.loadFromUrl(urlglasses1, "model", function (err, asset) {
                 glasses1 = new pc.Entity();
                 glasses1.addComponent("model", {
@@ -66,11 +65,12 @@
                     castShadows: true
                 });
 
-                glasses1.setLocalScale(0.06, 0.06, 0.06);
-                glasses1.setPosition(0, 0.38, 0.13);
+                glasses1.setLocalScale(0.006, 0.006, 0.006);
+                glasses1.setPosition(0, 0.3, 0.2);
+                glasses1.rotate(0, 180, 0);
                 glasses.push(glasses1);
             });
-//Glasses2
+            //Glasses2
             var urlglasses2 = "assets/play/glasses1/glasses.glb";
             app.assets.loadFromUrl(urlglasses2, "model", function (err, asset) {
                 glasses2 = new pc.Entity();
@@ -85,7 +85,7 @@
                 glasses.push(glasses2);
             });
 
-//Screen
+            //Screen
             var screen = new pc.Entity();
             screen.addComponent("screen", {
                 referenceResolution: new pc.Vec2(1280, 720),
@@ -104,7 +104,7 @@
             camera.script.create('orbitCameraMouseInput');
             camera.translate(0, 0, 10);
 
-//Light
+            //Light
             var light = new pc.Entity();
             light.addComponent("light", {
                 type: "point",
@@ -113,7 +113,7 @@
                 castShadows: true
             });
             light.translate(5, 0, 15);
-;
+            ;
             function createButton(labelText, x, y, z, height, width) {
                 var button = new pc.Entity();
                 button.addComponent("button", {
@@ -196,12 +196,16 @@
                 let hex = Object.values(hexToRgb(color));
                 for (let i = 0; i < glasses.length; i++) {
                     var materials = glasses[i].model.model.getMaterials();
-                    materials[0].diffuse = new pc.Color(hex[0] / 255, hex[1] / 255, hex[2] / 255);
-                    materials[0].update();
+                    materials.map((item, i) => {
+                        if (i===0 || i ===2) {
+                            item.diffuse = new pc.Color(hex[0] / 255, hex[1] / 255, hex[2] / 255);
+                            item.update();
+                        }
+                    })
                 }
             });
             screen.addChild(btnColor);
-// Load a font
+            // Load a font
             var fontAsset = new pc.Asset('courier.json', "font", { url: "./fonts/Arial.json" });
             screen.findComponents('element').forEach(function (elementComponent) {
                 if (elementComponent.type === pc.ELEMENTTYPE_TEXT) {
